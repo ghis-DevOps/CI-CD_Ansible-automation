@@ -1,0 +1,49 @@
+name: CI/CD automation
+
+on:
+  push:
+    branches:
+      - "**"  # Runs on all branches
+
+jobs:
+  automation:
+    runs-on: ["linux", "self-hosted", "ubuntu", "custom-runner", "docker"]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.STAGE_DEPLOY_USER_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.STAGE_DEPLOY_USER_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.STAGE_AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ vars.STAGE_AWS_DEFAULT_REGION }} | \
+          docker login --username AWS --password-stdin \
+          ${{ vars.STAGE_AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.STAGE_AWS_DEFAULT_REGION }}.amazonaws.com
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ansible-lint:latest .
+
+      - name: Run Ansible Lint inside the container
+        run: |
+          docker run --rm ansible-lint:latest ansible-lint
+
+
+
+
+
+
+
+
+
+
+
