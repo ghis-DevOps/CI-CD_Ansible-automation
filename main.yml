@@ -1,0 +1,11 @@
+---
+- name: Install Apache
+  ansible.builtin.package:
+    name: httpd
+    state: present
+
+- name: Start and enable Apache
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true
